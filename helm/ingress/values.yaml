@@ -1,0 +1,29 @@
+controller:
+
+  config:
+    use-geoip2: "true"
+    geoip2-city-db: "/etc/ingress-controller/geoip/GeoLite2-City.mmdb"
+    geoip2-asn-db: "/etc/ingress-controller/geoip/GeoLite2-ASN.mmdb"
+
+  extraVolumeMounts:
+    - name: geoip
+      mountPath: /etc/ingress-controller/geoip
+
+  extraVolumes:
+    - name: geoip
+      emptyDir: {}
+
+  extraInitContainers:
+    - name: geoip-init
+      image: gcr.io/hello-geoip-service/geoip-db:latest
+      command: ["/bin/sh", "-c"]
+      args: 
+        - cp /GeoLite2-City.mmdb /geoip/GeoLite2-City.mmdb && cp /GeoLite2-City.mmdb /geoip/GeoLite2-ASN.mmdb
+      volumeMounts:
+        - name: geoip
+          mountPath: /geoip
+
+  proxySetHeaders:
+    X-GeoIP-Country-Code: "$geoip2_city_country_code"
+    X-GeoIP-City: "London"
+
